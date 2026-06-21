@@ -6,3 +6,6 @@ beautifulsoup4
 pdfplumber
 PyPDF2
 playwright
+selenium
+lxml
+html5lib
