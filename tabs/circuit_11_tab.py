@@ -1,0 +1,193 @@
+"""Eleventh Circuit tab display — standardized 11-field schema."""
+import json
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+from utils.helpers import safe_sorted_unique
+
+
+def display_eleventh_circuit_tab():
+    st.title("🟢 Eleventh Circuit Court Calendar")
+
+    if st.session_state.c11_cases:
+        df = pd.DataFrame(st.session_state.c11_cases)
+
+        # --- Metrics row ---
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Total Cases", len(df))
+        with col2:
+            if "Date" in df.columns:
+                dates = df["Date"].dropna()
+                dates = dates[dates != ""]
+                st.metric("Hearing Days", dates.nunique())
+            else:
+                st.metric("Hearing Days", "N/A")
+        with col3:
+            if "Judges / Panel" in df.columns:
+                panels = df["Judges / Panel"].dropna()
+                panels = panels[panels != ""]
+                st.metric("Judge Panels", panels.nunique())
+            else:
+                st.metric("Judge Panels", "N/A")
+        with col4:
+            if "Location" in df.columns:
+                locs = df["Location"].dropna()
+                locs = locs[locs != ""]
+                st.metric("Locations", locs.nunique())
+            else:
+                st.metric("Locations", "N/A")
+
+        st.divider()
+
+        # --- Purpose legend ---
+        if "Description" in df.columns:
+            desc_text = " ".join(df["Description"].dropna().astype(str))
+            has_flags = any(
+                kw in desc_text.lower()
+                for kw in ["extended time", "submitted on briefs", "opinion issued"]
+            )
+            if has_flags:
+                with st.expander("🏁 Case Flags Legend"):
+                    st.markdown("""
+                    - **Submitted on briefs**: Appeal submitted on briefs (no oral argument)
+                    - **Extended time (20 min/side)**: 20 minutes per side instead of standard 15
+                    - **Opinion issued**: Opinion has already been issued
+                    """)
+
+        # --- Filters ---
+        st.subheader("🔍 Filters")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            c11_date_filter = st.multiselect(
+                "Filter by Date",
+                options=safe_sorted_unique(df["Date"]) if "Date" in df.columns else [],
+                default=None,
+                key="c11_date_filter",
+            )
+        with col2:
+            if "Location" in df.columns:
+                all_locs = [loc for loc in safe_sorted_unique(df["Location"]) if loc]
+                c11_loc_filter = st.multiselect(
+                    "Filter by Location",
+                    options=all_locs,
+                    default=None,
+                    key="c11_loc_filter",
+                )
+            else:
+                c11_loc_filter = None
+        with col3:
+            if "Purpose of Hearing" in df.columns:
+                all_purposes = [
+                    p for p in safe_sorted_unique(df["Purpose of Hearing"]) if p
+                ]
+                c11_purpose_filter = st.multiselect(
+                    "Filter by Purpose",
+                    options=all_purposes,
+                    default=None,
+                    key="c11_purpose_filter",
+                )
+            else:
+                c11_purpose_filter = None
+        with col4:
+            c11_search = st.text_input("Search", "", key="c11_search")
+
+        # Apply filters
+        filtered = df.copy()
+        if c11_date_filter and "Date" in filtered.columns:
+            filtered = filtered[filtered["Date"].isin(c11_date_filter)]
+        if c11_loc_filter and "Location" in filtered.columns:
+            filtered = filtered[filtered["Location"].isin(c11_loc_filter)]
+        if c11_purpose_filter and "Purpose of Hearing" in filtered.columns:
+            filtered = filtered[
+                filtered["Purpose of Hearing"].isin(c11_purpose_filter)
+            ]
+        if c11_search:
+            mask = filtered.apply(
+                lambda r: c11_search.lower() in str(r).lower(), axis=1
+            )
+            filtered = filtered[mask]
+
+        # --- Data table ---
+        st.subheader(f"📋 Cases ({len(filtered)} shown)")
+
+        display_cols = [
+            "Date", "Case Number", "Case Name", "Nature of Case",
+            "Court Name", "Location", "Judges / Panel", "Courtroom",
+            "Purpose of Hearing", "Time", "Description",
+        ]
+        available_cols = [c for c in display_cols if c in filtered.columns]
+        st.dataframe(filtered[available_cols], use_container_width=True, height=500)
+
+        # --- Charts ---
+        st.divider()
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.subheader("📊 Cases by Date")
+            if "Date" in filtered.columns:
+                date_counts = filtered["Date"].value_counts().sort_index()
+                date_counts = date_counts[date_counts.index != ""]
+                if not date_counts.empty:
+                    st.bar_chart(date_counts)
+        with col2:
+            st.subheader("📊 Cases by Location")
+            if "Location" in filtered.columns:
+                loc_counts = filtered["Location"].value_counts()
+                loc_counts = loc_counts[loc_counts.index != ""]
+                if not loc_counts.empty:
+                    st.bar_chart(loc_counts)
+        with col3:
+            st.subheader("📊 Hearing Purpose")
+            if "Purpose of Hearing" in filtered.columns:
+                purpose_counts = filtered["Purpose of Hearing"].value_counts()
+                purpose_counts = purpose_counts[purpose_counts.index != ""]
+                if not purpose_counts.empty:
+                    st.bar_chart(purpose_counts)
+
+        # --- Downloads ---
+        st.divider()
+        col1, col2 = st.columns(2)
+        with col1:
+            csv = filtered.to_csv(index=False)
+            st.download_button(
+                "📥 Download Eleventh Circuit as CSV",
+                data=csv,
+                file_name=f"eleventh_circuit_{datetime.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv",
+                key="c11_download",
+            )
+        with col2:
+            raw_json = filtered.to_dict(orient="records")
+            st.download_button(
+                "📥 Download Full JSON",
+                data=json.dumps(raw_json, indent=2, ensure_ascii=False),
+                file_name=f"eleventh_circuit_raw_{datetime.now().strftime('%Y%m%d')}.json",
+                mime="application/json",
+                key="c11_json_download",
+            )
+
+        # --- Raw PDF data ---
+        with st.expander("📄 View Raw PDF Data"):
+            if st.session_state.get("c11_raw_data"):
+                for idx, data in enumerate(st.session_state.c11_raw_data, 1):
+                    cal_title = data.get("calendar", {}).get("title", "N/A")
+                    pdf_url = data.get("calendar", {}).get("pdf_url", "")
+                    st.text_area(
+                        f"PDF {idx} — {cal_title}",
+                        value=data.get("text", "")[:5000],
+                        height=300,
+                        disabled=True,
+                        key=f"c11_raw_{idx}",
+                    )
+                    if pdf_url:
+                        st.caption(f"Source: {pdf_url}")
+            else:
+                st.info("No raw PDF data available.")
+
+        with st.expander("🔧 View Parsed Data (JSON)"):
+            raw_json = filtered.to_dict(orient="records")
+            st.json(raw_json[:5])
+            if len(raw_json) > 5:
+                st.caption(f"Showing first 5 of {len(raw_json)} records.")
+    else:
+        st.info("👈 Click 'Fetch Eleventh Circuit' in the sidebar to load data")

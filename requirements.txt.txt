@@ -1,0 +1,8 @@
+streamlit>=1.30.0
+pandas
+requests
+urllib3
+beautifulsoup4
+pdfplumber
+PyPDF2
+playwright
