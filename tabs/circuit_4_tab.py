@@ -22,6 +22,9 @@ DISPLAY_COLUMNS = [
 def display_fourth_circuit_tab():
     st.title("🟠 Fourth Circuit Court Calendar")
 
+    # ── Disclaimer ──────────────────────────────────────────────────────
+    st.error("🚫 **(not for use)**")
+
     if not st.session_state.get("c4_cases"):
         st.info("👈 Click 'Fetch Fourth Circuit' in the sidebar to load data")
         return
