@@ -20,6 +20,9 @@ STANDARD_COLUMNS = [
 def display_second_circuit_tab():
     st.title("🔴 Second Circuit Court Calendar")
 
+    # ── Disclaimer ──────────────────────────────────────────────────────
+    st.error("🚫 **(not for use)**")
+
     if st.session_state.c2_cases:
         df = pd.DataFrame(st.session_state.c2_cases)
 
