@@ -40,6 +40,9 @@ SHORT_LABELS = {
 def display_combined_tab():
     st.title("⚖️ Combined Federal Court Calendar")
 
+    # ── Disclaimer ──────────────────────────────────────────────────────
+    st.error("🚫 **(not for use)**")
+
     if st.session_state.combined_cases:
         df = pd.DataFrame(st.session_state.combined_cases)
 
