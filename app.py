@@ -299,6 +299,11 @@ def main():
              "Tenth Circuit", "Eleventh Circuit", "DC Circuit",
              "Federal Circuit", "All Circuits"],
             index=13,  # "All Circuits"
+            format_func=lambda x: {
+                "Second Circuit": "Second Circuit (not for use)",
+                "Fourth Circuit": "Fourth Circuit (not for use)",
+                "All Circuits": "All Circuits (not for use)",
+            }.get(x, x),
         )
         st.session_state.selected_circuit = circuit_option
 
