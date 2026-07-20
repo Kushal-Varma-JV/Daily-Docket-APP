@@ -146,7 +146,7 @@ def _normalize_to_standard(cases: list, court_name_fallback: str) -> list:
                 "Case Name":          row.get("Case Name", ""),
                 "Case Number":        row.get("Case Number", ""),
                 "Nature of Case":     row.get("Nature of Case", ""),
-                "Court Name":         row.get("Court Name", court_name_fallback),
+                "Court Name":         row.get("Court Name", court_name_fback),
                 "Location (City)":    row.get("Location", ""),
                 "Judges / Panel":     row.get("Judges/Panel", ""),
                 "Courtroom":          row.get("Courtroom", ""),
@@ -160,7 +160,7 @@ def _normalize_to_standard(cases: list, court_name_fallback: str) -> list:
                 "Case Name":          row.get("Case Name", ""),
                 "Case Number":        row.get("Case Number", ""),
                 "Nature of Case":     row.get("Nature of Case", ""),
-                "Court Name":         row.get("Court Name", court_name_fallback),
+                "Court Name":         row.get("Court Name", court_name_fback),
                 "Location (City)":    row.get("Location", ""),
                 "Judges / Panel":     row.get("Judges / Panel", ""),
                 "Courtroom":          row.get("Courtroom", ""),
@@ -329,7 +329,7 @@ def main():
 
         # ── Second Circuit ──
         if circuit_option in ["Second Circuit", "All Circuits"]:
-            st.subheader("🔴 Second Circuit")
+            st.subheader("🔴 Second Circuit (not for use)")
             col1, col2 = st.columns(2)
             with col1:
                 c2_start_month = st.selectbox("Start Month", range(1, 13), index=0, key="c2_sm")
@@ -403,7 +403,7 @@ def main():
 
         # ── Fourth Circuit ──
         if circuit_option in ["Fourth Circuit", "All Circuits"]:
-            st.subheader("🟠 Fourth Circuit")
+            st.subheader("🟠 Fourth Circuit (not for use)")
             c4_session_filter = st.radio(
                 "Session types:",
                 ["Both", "Regular Only", "Law School & Special Only"],
